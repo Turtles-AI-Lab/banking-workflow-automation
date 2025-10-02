@@ -1,0 +1,785 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Banking Workflow Automation - Dashboard</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        .header {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            margin-bottom: 30px;
+        }
+
+        .header h1 {
+            color: #333;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            color: #666;
+            font-size: 16px;
+        }
+
+        .nav-buttons {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+        }
+
+        .nav-btn {
+            padding: 12px 24px;
+            background: #667eea;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: background 0.3s;
+        }
+
+        .nav-btn:hover {
+            background: #5568d3;
+        }
+
+        .nav-btn.active {
+            background: #764ba2;
+        }
+
+        .metrics-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .metric-card {
+            background: white;
+            padding: 25px;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+
+        .metric-card h3 {
+            color: #666;
+            font-size: 14px;
+            font-weight: 500;
+            margin-bottom: 10px;
+            text-transform: uppercase;
+        }
+
+        .metric-value {
+            font-size: 36px;
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 5px;
+        }
+
+        .metric-subtitle {
+            color: #999;
+            font-size: 13px;
+        }
+
+        .metric-card.purple .metric-value { color: #667eea; }
+        .metric-card.green .metric-value { color: #10b981; }
+        .metric-card.orange .metric-value { color: #f59e0b; }
+        .metric-card.red .metric-value { color: #ef4444; }
+
+        .content-section {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            display: none;
+        }
+
+        .content-section.active {
+            display: block;
+        }
+
+        .content-section h2 {
+            color: #333;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #667eea;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            color: #333;
+            font-weight: 500;
+            margin-bottom: 8px;
+        }
+
+        .form-group input,
+        .form-group select {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 14px;
+        }
+
+        .form-group input:focus,
+        .form-group select:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .form-row {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+        }
+
+        .btn {
+            padding: 14px 28px;
+            background: #667eea;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 500;
+            transition: background 0.3s;
+        }
+
+        .btn:hover {
+            background: #5568d3;
+        }
+
+        .btn:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+
+        .applications-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+
+        .applications-table th,
+        .applications-table td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #eee;
+        }
+
+        .applications-table th {
+            background: #f8f9fa;
+            font-weight: 600;
+            color: #333;
+        }
+
+        .applications-table tr:hover {
+            background: #f8f9fa;
+        }
+
+        .status-badge {
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 500;
+            display: inline-block;
+        }
+
+        .status-draft { background: #e5e7eb; color: #374151; }
+        .status-submitted { background: #dbeafe; color: #1e40af; }
+        .status-identity_verification { background: #fef3c7; color: #92400e; }
+        .status-compliance_review { background: #fef3c7; color: #92400e; }
+        .status-manual_review { background: #fed7aa; color: #9a3412; }
+        .status-approved { background: #d1fae5; color: #065f46; }
+        .status-rejected { background: #fee2e2; color: #991b1b; }
+
+        .risk-badge {
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 500;
+            display: inline-block;
+        }
+
+        .risk-low { background: #d1fae5; color: #065f46; }
+        .risk-medium { background: #fef3c7; color: #92400e; }
+        .risk-high { background: #fed7aa; color: #9a3412; }
+        .risk-critical { background: #fee2e2; color: #991b1b; }
+
+        .alert {
+            padding: 15px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+        }
+
+        .alert-success {
+            background: #d1fae5;
+            color: #065f46;
+            border-left: 4px solid #10b981;
+        }
+
+        .alert-error {
+            background: #fee2e2;
+            color: #991b1b;
+            border-left: 4px solid #ef4444;
+        }
+
+        .alert-info {
+            background: #dbeafe;
+            color: #1e40af;
+            border-left: 4px solid #3b82f6;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: #666;
+        }
+
+        .spinner {
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #667eea;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .validation-result {
+            padding: 10px;
+            margin: 5px 0;
+            border-radius: 5px;
+        }
+
+        .validation-result.valid {
+            background: #d1fae5;
+            color: #065f46;
+        }
+
+        .validation-result.invalid {
+            background: #fee2e2;
+            color: #991b1b;
+        }
+
+        .rules-list {
+            list-style: none;
+        }
+
+        .rule-item {
+            padding: 15px;
+            background: #f8f9fa;
+            margin-bottom: 10px;
+            border-radius: 5px;
+            border-left: 4px solid #667eea;
+        }
+
+        .rule-item h4 {
+            color: #333;
+            margin-bottom: 5px;
+        }
+
+        .rule-item p {
+            color: #666;
+            font-size: 14px;
+            margin: 5px 0;
+        }
+
+        .rule-priority {
+            display: inline-block;
+            padding: 2px 8px;
+            background: #667eea;
+            color: white;
+            border-radius: 3px;
+            font-size: 12px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🏦 Banking Workflow Automation</h1>
+            <p>AI-Powered Account Opening & Workflow Orchestration Platform</p>
+            <div class="nav-buttons">
+                <button class="nav-btn active" onclick="showSection('dashboard')">Dashboard</button>
+                <button class="nav-btn" onclick="showSection('new-application')">New Application</button>
+                <button class="nav-btn" onclick="showSection('applications')">Applications</button>
+                <button class="nav-btn" onclick="showSection('rules')">Business Rules</button>
+                <button class="nav-btn" onclick="showSection('api-docs')">API Docs</button>
+            </div>
+        </div>
+
+        <div id="metrics" class="metrics-grid">
+            <!-- Metrics will be loaded here -->
+        </div>
+
+        <!-- Dashboard Section -->
+        <div id="dashboard-section" class="content-section active">
+            <h2>📊 Overview</h2>
+            <div id="dashboard-content">
+                <div class="loading">
+                    <div class="spinner"></div>
+                    <p>Loading dashboard data...</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- New Application Section -->
+        <div id="new-application-section" class="content-section">
+            <h2>📝 New Account Application</h2>
+            <form id="application-form">
+                <div class="form-group">
+                    <label>Account Type</label>
+                    <select id="account_type" required>
+                        <option value="personal_checking">Personal Checking</option>
+                        <option value="personal_savings">Personal Savings</option>
+                        <option value="business_checking">Business Checking</option>
+                        <option value="business_savings">Business Savings</option>
+                    </select>
+                </div>
+
+                <h3 style="margin: 30px 0 20px 0;">Personal Information</h3>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>First Name *</label>
+                        <input type="text" id="first_name" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Middle Name</label>
+                        <input type="text" id="middle_name">
+                    </div>
+                    <div class="form-group">
+                        <label>Last Name *</label>
+                        <input type="text" id="last_name" required>
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Email *</label>
+                        <input type="email" id="email" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Phone *</label>
+                        <input type="tel" id="phone" placeholder="(123) 456-7890" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Date of Birth *</label>
+                        <input type="date" id="date_of_birth" required>
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Social Security Number *</label>
+                        <input type="text" id="ssn" placeholder="XXX-XX-XXXX" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Citizenship</label>
+                        <select id="citizenship">
+                            <option value="US">United States</option>
+                            <option value="other">Other</option>
+                        </select>
+                    </div>
+                </div>
+
+                <h3 style="margin: 30px 0 20px 0;">Address</h3>
+                <div class="form-group">
+                    <label>Address Line 1 *</label>
+                    <input type="text" id="address_line1" required>
+                </div>
+                <div class="form-group">
+                    <label>Address Line 2</label>
+                    <input type="text" id="address_line2">
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>City *</label>
+                        <input type="text" id="city" required>
+                    </div>
+                    <div class="form-group">
+                        <label>State *</label>
+                        <input type="text" id="state" placeholder="FL" required>
+                    </div>
+                    <div class="form-group">
+                        <label>ZIP Code *</label>
+                        <input type="text" id="zip_code" placeholder="12345" required>
+                    </div>
+                </div>
+
+                <h3 style="margin: 30px 0 20px 0;">Employment Information (Optional)</h3>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Employer Name</label>
+                        <input type="text" id="employer_name">
+                    </div>
+                    <div class="form-group">
+                        <label>Occupation</label>
+                        <input type="text" id="occupation">
+                    </div>
+                    <div class="form-group">
+                        <label>Annual Income</label>
+                        <input type="number" id="annual_income" placeholder="50000">
+                    </div>
+                </div>
+
+                <div style="margin-top: 30px;">
+                    <button type="submit" class="btn">Submit Application</button>
+                </div>
+            </form>
+
+            <div id="application-result" style="margin-top: 20px;"></div>
+        </div>
+
+        <!-- Applications List Section -->
+        <div id="applications-section" class="content-section">
+            <h2>📋 Applications</h2>
+            <div id="applications-list">
+                <div class="loading">
+                    <div class="spinner"></div>
+                    <p>Loading applications...</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Business Rules Section -->
+        <div id="rules-section" class="content-section">
+            <h2>⚙️ Business Rules</h2>
+            <div id="rules-list">
+                <div class="loading">
+                    <div class="spinner"></div>
+                    <p>Loading rules...</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- API Docs Section -->
+        <div id="api-docs-section" class="content-section">
+            <h2>📚 API Documentation</h2>
+            <p>For complete API documentation, visit <a href="http://localhost:8000/docs" target="_blank">http://localhost:8000/docs</a></p>
+            <h3 style="margin-top: 30px;">Quick Reference</h3>
+            <div class="rule-item">
+                <h4>POST /applications/create</h4>
+                <p>Create a new account application</p>
+            </div>
+            <div class="rule-item">
+                <h4>GET /applications</h4>
+                <p>List all applications with optional status filter</p>
+            </div>
+            <div class="rule-item">
+                <h4>POST /applications/{id}/validate</h4>
+                <p>Validate application data using AI</p>
+            </div>
+            <div class="rule-item">
+                <h4>POST /applications/{id}/submit</h4>
+                <p>Submit application for processing</p>
+            </div>
+            <div class="rule-item">
+                <h4>GET /dashboard/metrics</h4>
+                <p>Get real-time dashboard metrics</p>
+            </div>
+            <div class="rule-item">
+                <h4>GET /rules</h4>
+                <p>List all business rules</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE = 'http://localhost:8000';
+
+        // Navigation
+        function showSection(sectionName) {
+            // Hide all sections
+            document.querySelectorAll('.content-section').forEach(section => {
+                section.classList.remove('active');
+            });
+
+            // Update nav buttons
+            document.querySelectorAll('.nav-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+
+            // Show selected section
+            document.getElementById(`${sectionName}-section`).classList.add('active');
+            event.target.classList.add('active');
+
+            // Load section data
+            if (sectionName === 'dashboard') {
+                loadDashboard();
+            } else if (sectionName === 'applications') {
+                loadApplications();
+            } else if (sectionName === 'rules') {
+                loadRules();
+            }
+        }
+
+        // Load metrics
+        async function loadMetrics() {
+            try {
+                const response = await fetch(`${API_BASE}/dashboard/metrics`);
+                const metrics = await response.json();
+
+                const metricsHTML = `
+                    <div class="metric-card purple">
+                        <h3>Total Applications</h3>
+                        <div class="metric-value">${metrics.total_applications}</div>
+                        <div class="metric-subtitle">${metrics.applications_last_24h} in last 24h</div>
+                    </div>
+                    <div class="metric-card green">
+                        <h3>Approval Rate</h3>
+                        <div class="metric-value">${(metrics.approval_rate * 100).toFixed(1)}%</div>
+                        <div class="metric-subtitle">Automation: ${(metrics.automation_rate * 100).toFixed(1)}%</div>
+                    </div>
+                    <div class="metric-card orange">
+                        <h3>Avg Processing Time</h3>
+                        <div class="metric-value">${metrics.average_processing_time_hours.toFixed(1)}h</div>
+                        <div class="metric-subtitle">Hours to completion</div>
+                    </div>
+                    <div class="metric-card red">
+                        <h3>Fraud Detection</h3>
+                        <div class="metric-value">${(metrics.fraud_detection_rate * 100).toFixed(1)}%</div>
+                        <div class="metric-subtitle">Integration: ${(metrics.integration_success_rate * 100).toFixed(1)}%</div>
+                    </div>
+                `;
+
+                document.getElementById('metrics').innerHTML = metricsHTML;
+            } catch (error) {
+                console.error('Error loading metrics:', error);
+            }
+        }
+
+        // Load dashboard
+        async function loadDashboard() {
+            try {
+                const response = await fetch(`${API_BASE}/dashboard/metrics`);
+                const metrics = await response.json();
+
+                let statusBreakdown = '';
+                for (const [status, count] of Object.entries(metrics.applications_by_status)) {
+                    statusBreakdown += `
+                        <div class="rule-item">
+                            <h4><span class="status-badge status-${status}">${status.replace('_', ' ').toUpperCase()}</span></h4>
+                            <p>${count} applications</p>
+                        </div>
+                    `;
+                }
+
+                const dashboardHTML = `
+                    <h3>Applications by Status</h3>
+                    ${statusBreakdown || '<p>No applications yet</p>'}
+                `;
+
+                document.getElementById('dashboard-content').innerHTML = dashboardHTML;
+            } catch (error) {
+                document.getElementById('dashboard-content').innerHTML = '<p>Error loading dashboard</p>';
+            }
+        }
+
+        // Load applications
+        async function loadApplications() {
+            try {
+                const response = await fetch(`${API_BASE}/applications`);
+                const applications = await response.json();
+
+                if (applications.length === 0) {
+                    document.getElementById('applications-list').innerHTML = '<p>No applications found</p>';
+                    return;
+                }
+
+                let tableHTML = `
+                    <table class="applications-table">
+                        <thead>
+                            <tr>
+                                <th>Application ID</th>
+                                <th>Name</th>
+                                <th>Account Type</th>
+                                <th>Status</th>
+                                <th>Risk Level</th>
+                                <th>Created</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                `;
+
+                applications.forEach(app => {
+                    tableHTML += `
+                        <tr>
+                            <td>${app.application_id}</td>
+                            <td>${app.personal_info.first_name} ${app.personal_info.last_name}</td>
+                            <td>${app.account_type.replace('_', ' ')}</td>
+                            <td><span class="status-badge status-${app.status}">${app.status.replace('_', ' ')}</span></td>
+                            <td><span class="risk-badge risk-${app.risk_level}">${app.risk_level}</span></td>
+                            <td>${new Date(app.created_at).toLocaleDateString()}</td>
+                            <td><button class="nav-btn" onclick="viewApplication('${app.application_id}')">View</button></td>
+                        </tr>
+                    `;
+                });
+
+                tableHTML += `
+                        </tbody>
+                    </table>
+                `;
+
+                document.getElementById('applications-list').innerHTML = tableHTML;
+            } catch (error) {
+                document.getElementById('applications-list').innerHTML = '<p>Error loading applications</p>';
+            }
+        }
+
+        // Load rules
+        async function loadRules() {
+            try {
+                const response = await fetch(`${API_BASE}/rules`);
+                const rules = await response.json();
+
+                let rulesHTML = '<ul class="rules-list">';
+
+                rules.forEach(rule => {
+                    rulesHTML += `
+                        <li class="rule-item">
+                            <h4>${rule.rule_name} <span class="rule-priority">Priority: ${rule.priority}</span></h4>
+                            <p><strong>Condition:</strong> ${rule.condition}</p>
+                            <p><strong>Action:</strong> ${rule.action}</p>
+                            <p><strong>Status:</strong> ${rule.enabled ? '✅ Enabled' : '❌ Disabled'}</p>
+                        </li>
+                    `;
+                });
+
+                rulesHTML += '</ul>';
+
+                document.getElementById('rules-list').innerHTML = rulesHTML;
+            } catch (error) {
+                document.getElementById('rules-list').innerHTML = '<p>Error loading rules</p>';
+            }
+        }
+
+        // Submit application form
+        document.getElementById('application-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            const formData = {
+                personal_info: {
+                    first_name: document.getElementById('first_name').value,
+                    middle_name: document.getElementById('middle_name').value || null,
+                    last_name: document.getElementById('last_name').value,
+                    email: document.getElementById('email').value,
+                    phone: document.getElementById('phone').value,
+                    date_of_birth: document.getElementById('date_of_birth').value,
+                    ssn: document.getElementById('ssn').value,
+                    address_line1: document.getElementById('address_line1').value,
+                    address_line2: document.getElementById('address_line2').value || null,
+                    city: document.getElementById('city').value,
+                    state: document.getElementById('state').value,
+                    zip_code: document.getElementById('zip_code').value,
+                    citizenship: document.getElementById('citizenship').value
+                },
+                account_type: document.getElementById('account_type').value,
+                employment_info: null
+            };
+
+            // Add employment info if provided
+            if (document.getElementById('employer_name').value) {
+                formData.employment_info = {
+                    employer_name: document.getElementById('employer_name').value,
+                    occupation: document.getElementById('occupation').value,
+                    annual_income: parseFloat(document.getElementById('annual_income').value) || null,
+                    employment_status: "employed"
+                };
+            }
+
+            try {
+                // Create application
+                const createResponse = await fetch(`${API_BASE}/applications/create`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(formData)
+                });
+
+                const application = await createResponse.json();
+
+                // Validate application
+                const validateResponse = await fetch(`${API_BASE}/applications/${application.application_id}/validate`, {
+                    method: 'POST'
+                });
+
+                const validation = await validateResponse.json();
+
+                // Submit application
+                const submitResponse = await fetch(`${API_BASE}/applications/${application.application_id}/submit`, {
+                    method: 'POST'
+                });
+
+                const result = await submitResponse.json();
+
+                // Show result
+                document.getElementById('application-result').innerHTML = `
+                    <div class="alert alert-success">
+                        <h3>Application Submitted Successfully!</h3>
+                        <p><strong>Application ID:</strong> ${application.application_id}</p>
+                        <p><strong>Status:</strong> Processing</p>
+                        <p><strong>Fraud Score:</strong> ${(validation.fraud_score * 100).toFixed(1)}%</p>
+                        <p><strong>Risk Level:</strong> ${validation.risk_level}</p>
+                    </div>
+                `;
+
+                // Reset form
+                document.getElementById('application-form').reset();
+
+                // Reload metrics
+                loadMetrics();
+
+            } catch (error) {
+                document.getElementById('application-result').innerHTML = `
+                    <div class="alert alert-error">
+                        <h3>Error</h3>
+                        <p>${error.message}</p>
+                    </div>
+                `;
+            }
+        });
+
+        // View application details
+        function viewApplication(applicationId) {
+            alert(`View application ${applicationId}\n(Full detail view would be implemented here)`);
+        }
+
+        // Initialize
+        loadMetrics();
+        loadDashboard();
+
+        // Refresh metrics every 30 seconds
+        setInterval(loadMetrics, 30000);
+    </script>
+</body>
+</html>
