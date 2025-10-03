@@ -4,7 +4,7 @@ Simulates external API calls for identity verification, credit checks, and KYC/A
 """
 from typing import Dict, Any
 from models import Integration
-import random
+import secrets
 import time
 from datetime import datetime
 import hashlib
@@ -26,8 +26,8 @@ class MockIntegrationService:
         # Generate mock response
         request_id = self._generate_request_id("IDV")
 
-        # Simulate verification logic
-        verification_score = random.uniform(0.7, 1.0)
+        # Simulate verification logic using secure random
+        verification_score = 0.7 + (secrets.randbelow(300) / 1000.0)  # 0.7 to 1.0
         is_verified = verification_score > 0.85
 
         response_data = {
@@ -35,8 +35,8 @@ class MockIntegrationService:
             "verification_score": round(verification_score, 2),
             "verification_method": "document_and_selfie",
             "identity_match": is_verified,
-            "document_authentic": random.choice([True, False]) if not is_verified else True,
-            "liveness_check": random.choice([True, False]) if not is_verified else True,
+            "document_authentic": bool(secrets.randbelow(2)) if not is_verified else True,
+            "liveness_check": bool(secrets.randbelow(2)) if not is_verified else True,
             "address_verified": is_verified,
             "ssn_verified": is_verified,
             "warnings": [] if is_verified else ["Document quality low", "Address mismatch"],
@@ -61,8 +61,8 @@ class MockIntegrationService:
 
         request_id = self._generate_request_id("CRD")
 
-        # Generate mock credit score
-        credit_score = random.randint(550, 850)
+        # Generate mock credit score using secure random
+        credit_score = 550 + secrets.randbelow(301)  # 550 to 850
 
         # Determine credit tier
         if credit_score >= 740:
@@ -78,13 +78,13 @@ class MockIntegrationService:
             "credit_score": credit_score,
             "credit_tier": tier,
             "credit_report_available": True,
-            "delinquent_accounts": random.randint(0, 3) if credit_score < 650 else 0,
-            "total_accounts": random.randint(3, 15),
-            "credit_utilization": round(random.uniform(0.1, 0.9), 2),
-            "bankruptcies": random.choice([0, 1]) if credit_score < 600 else 0,
+            "delinquent_accounts": secrets.randbelow(4) if credit_score < 650 else 0,
+            "total_accounts": 3 + secrets.randbelow(13),
+            "credit_utilization": round((100 + secrets.randbelow(800)) / 1000.0, 2),
+            "bankruptcies": secrets.randbelow(2) if credit_score < 600 else 0,
             "foreclosures": 0,
-            "inquiries_last_6_months": random.randint(0, 5),
-            "oldest_account_years": random.randint(1, 20),
+            "inquiries_last_6_months": secrets.randbelow(6),
+            "oldest_account_years": 1 + secrets.randbelow(20),
             "approved_for_overdraft": credit_score >= 650,
             "recommended_credit_limit": credit_score * 10 if credit_score >= 650 else 0,
             "timestamp": datetime.now().isoformat()
@@ -108,8 +108,8 @@ class MockIntegrationService:
 
         request_id = self._generate_request_id("KYC")
 
-        # Simulate screening
-        risk_score = random.uniform(0.0, 0.5)  # Most people are low risk
+        # Simulate screening using secure random
+        risk_score = secrets.randbelow(500) / 1000.0  # 0.0 to 0.5, most people are low risk
         is_clear = risk_score < 0.3
 
         matches = []
@@ -155,8 +155,8 @@ class MockIntegrationService:
 
         request_id = self._generate_request_id("DOC")
 
-        # Simulate document processing
-        confidence = random.uniform(0.85, 0.99)
+        # Simulate document processing using secure random
+        confidence = 0.85 + (secrets.randbelow(140) / 1000.0)  # 0.85 to 0.99
         is_valid = confidence > 0.90
 
         response_data = {
@@ -174,7 +174,7 @@ class MockIntegrationService:
                 "is_authentic": is_valid,
                 "confidence_score": round(confidence, 2),
                 "tampering_detected": not is_valid,
-                "quality_score": round(random.uniform(0.8, 1.0), 2)
+                "quality_score": round(0.8 + (secrets.randbelow(200) / 1000.0), 2)
             },
             "warnings": [] if is_valid else ["Low image quality", "Potential tampering detected"],
             "timestamp": datetime.now().isoformat()
@@ -198,8 +198,8 @@ class MockIntegrationService:
 
         request_id = self._generate_request_id("FRD")
 
-        # Simulate fraud check
-        fraud_indicators = random.randint(0, 3)
+        # Simulate fraud check using secure random
+        fraud_indicators = secrets.randbelow(4)  # 0 to 3
         is_clean = fraud_indicators == 0
 
         indicators = []
@@ -210,7 +210,8 @@ class MockIntegrationService:
                 "Email appears on blacklist",
                 "Address linked to suspicious activity"
             ]
-            indicators = random.sample(possible_indicators, fraud_indicators)
+            # Use secure random sampling
+            indicators = [possible_indicators[i] for i in sorted(secrets.SystemRandom().sample(range(len(possible_indicators)), fraud_indicators))]
 
         response_data = {
             "status": "clear" if is_clean else "flagged",
@@ -219,8 +220,8 @@ class MockIntegrationService:
             "fraud_indicators": indicators,
             "previous_fraud_reports": fraud_indicators,
             "velocity_checks": {
-                "applications_same_ip_24h": random.randint(0, 2),
-                "applications_same_device_7d": random.randint(0, 3),
+                "applications_same_ip_24h": secrets.randbelow(3),
+                "applications_same_device_7d": secrets.randbelow(4),
                 "applications_same_email_30d": 1
             },
             "device_reputation": "trusted" if is_clean else "suspicious",
@@ -247,8 +248,8 @@ class MockIntegrationService:
 
         request_id = self._generate_request_id("EMP")
 
-        # Simulate employment verification
-        verification_successful = random.choice([True, True, True, False])  # 75% success rate
+        # Simulate employment verification using secure random - 75% success rate
+        verification_successful = secrets.randbelow(4) != 0  # 3 out of 4 chance
 
         response_data = {
             "employment_verified": verification_successful,
@@ -256,9 +257,9 @@ class MockIntegrationService:
             "employment_status": "active" if verification_successful else "unable_to_verify",
             "position_verified": verification_successful,
             "income_verified": verification_successful,
-            "length_of_employment_months": random.randint(6, 120) if verification_successful else None,
+            "length_of_employment_months": 6 + secrets.randbelow(115) if verification_successful else None,
             "verification_method": "payroll_records" if verification_successful else "not_verified",
-            "confidence": random.uniform(0.85, 0.99) if verification_successful else 0.0,
+            "confidence": 0.85 + (secrets.randbelow(140) / 1000.0) if verification_successful else 0.0,
             "notes": "" if verification_successful else "Employer not found in database",
             "timestamp": datetime.now().isoformat()
         }
@@ -276,15 +277,18 @@ class MockIntegrationService:
     async def _simulate_delay(self, min_seconds: float, max_seconds: float):
         """Simulate API processing time"""
         import asyncio
-        delay = random.uniform(min_seconds, max_seconds)
+        # Use secure random for delay
+        delay_ms = int(min_seconds * 1000) + secrets.randbelow(int((max_seconds - min_seconds) * 1000))
+        delay = delay_ms / 1000.0
         await asyncio.sleep(delay)
 
     def _generate_request_id(self, prefix: str) -> str:
-        """Generate a unique request ID"""
+        """Generate a unique request ID using secure hashing"""
         timestamp = str(int(time.time() * 1000))
-        random_str = str(random.randint(1000, 9999))
+        random_str = str(1000 + secrets.randbelow(9000))
         hash_input = f"{prefix}{timestamp}{random_str}"
-        hash_output = hashlib.md5(hash_input.encode()).hexdigest()[:8]
+        # Use SHA-256 instead of MD5 for better security
+        hash_output = hashlib.sha256(hash_input.encode()).hexdigest()[:8]
         return f"{prefix}-{hash_output.upper()}"
 
 
@@ -293,42 +297,130 @@ class IntegrationOrchestrator:
 
     def __init__(self):
         self.integration_service = MockIntegrationService()
+        self.timeout_seconds = 30  # Default timeout for integrations
 
     async def run_standard_checks(self, application_data: Dict[str, Any]) -> Dict[str, Integration]:
-        """Run standard verification checks"""
+        """Run standard verification checks with timeout and error handling"""
+        import asyncio
+
         results = {}
 
-        # Run identity verification
-        results["identity"] = await self.integration_service.verify_identity(
-            application_data.get("personal_info", {})
-        )
+        # Run identity verification with timeout
+        try:
+            results["identity"] = await asyncio.wait_for(
+                self.integration_service.verify_identity(
+                    application_data.get("personal_info", {})
+                ),
+                timeout=self.timeout_seconds
+            )
+        except asyncio.TimeoutError:
+            results["identity"] = self._create_error_integration(
+                "identity_verification",
+                "Timeout - request took too long"
+            )
+        except Exception as e:
+            results["identity"] = self._create_error_integration(
+                "identity_verification",
+                f"Integration error: {type(e).__name__}"
+            )
 
-        # Run fraud database check
-        results["fraud"] = await self.integration_service.check_fraud_database(
-            application_data.get("personal_info", {})
-        )
+        # Run fraud database check with timeout
+        try:
+            results["fraud"] = await asyncio.wait_for(
+                self.integration_service.check_fraud_database(
+                    application_data.get("personal_info", {})
+                ),
+                timeout=self.timeout_seconds
+            )
+        except asyncio.TimeoutError:
+            results["fraud"] = self._create_error_integration(
+                "fraud_database",
+                "Timeout - request took too long"
+            )
+        except Exception as e:
+            results["fraud"] = self._create_error_integration(
+                "fraud_database",
+                f"Integration error: {type(e).__name__}"
+            )
 
-        # Run KYC/AML screening
-        results["kyc_aml"] = await self.integration_service.kyc_aml_check(
-            application_data.get("personal_info", {})
-        )
+        # Run KYC/AML screening with timeout
+        try:
+            results["kyc_aml"] = await asyncio.wait_for(
+                self.integration_service.kyc_aml_check(
+                    application_data.get("personal_info", {})
+                ),
+                timeout=self.timeout_seconds
+            )
+        except asyncio.TimeoutError:
+            results["kyc_aml"] = self._create_error_integration(
+                "kyc_aml_screening",
+                "Timeout - request took too long"
+            )
+        except Exception as e:
+            results["kyc_aml"] = self._create_error_integration(
+                "kyc_aml_screening",
+                f"Integration error: {type(e).__name__}"
+            )
 
         return results
 
+    def _create_error_integration(self, integration_name: str, error_msg: str) -> Integration:
+        """Create an error integration result"""
+        return Integration(
+            integration_name=integration_name,
+            request_id=f"ERR-{secrets.token_hex(4).upper()}",
+            status="failed",
+            response_data={
+                "error": error_msg,
+                "timestamp": datetime.now().isoformat()
+            },
+            processing_time_ms=0
+        )
+
     async def run_enhanced_checks(self, application_data: Dict[str, Any]) -> Dict[str, Integration]:
-        """Run enhanced verification checks (for high-risk applications)"""
+        """Run enhanced verification checks (for high-risk applications) with timeout protection"""
+        import asyncio
+
         results = await self.run_standard_checks(application_data)
 
-        # Add credit check
-        results["credit"] = await self.integration_service.check_credit(
-            application_data.get("personal_info", {})
-        )
+        # Add credit check with timeout
+        try:
+            results["credit"] = await asyncio.wait_for(
+                self.integration_service.check_credit(
+                    application_data.get("personal_info", {})
+                ),
+                timeout=self.timeout_seconds
+            )
+        except asyncio.TimeoutError:
+            results["credit"] = self._create_error_integration(
+                "credit_check",
+                "Timeout - request took too long"
+            )
+        except Exception as e:
+            results["credit"] = self._create_error_integration(
+                "credit_check",
+                f"Integration error: {type(e).__name__}"
+            )
 
         # Add employment verification if employment info provided
         if application_data.get("employment_info"):
-            results["employment"] = await self.integration_service.verify_employment(
-                application_data.get("employment_info", {})
-            )
+            try:
+                results["employment"] = await asyncio.wait_for(
+                    self.integration_service.verify_employment(
+                        application_data.get("employment_info", {})
+                    ),
+                    timeout=self.timeout_seconds
+                )
+            except asyncio.TimeoutError:
+                results["employment"] = self._create_error_integration(
+                    "employment_verification",
+                    "Timeout - request took too long"
+                )
+            except Exception as e:
+                results["employment"] = self._create_error_integration(
+                    "employment_verification",
+                    f"Integration error: {type(e).__name__}"
+                )
 
         return results
 

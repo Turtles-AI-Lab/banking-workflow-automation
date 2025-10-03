@@ -232,7 +232,7 @@ class AIValidator:
                 ai_confidence=0.96
             )
 
-        except ValueError:
+        except (ValueError, TypeError, AttributeError) as e:
             return ValidationResult(
                 field_name="date_of_birth",
                 is_valid=False,
@@ -256,10 +256,11 @@ class AIValidator:
                 ai_confidence=0.98
             )
 
-        # Check for invalid patterns
+        # Check for invalid patterns - strengthen validation
         invalid_ssns = ['000000000', '111111111', '222222222', '333333333',
                        '444444444', '555555555', '666666666', '777777777',
-                       '888888888', '999999999', '123456789']
+                       '888888888', '999999999', '123456789', '987654321',
+                       '012345678', '876543210']
 
         if ssn_clean in invalid_ssns:
             return ValidationResult(
@@ -267,6 +268,28 @@ class AIValidator:
                 is_valid=False,
                 error_message="SSN appears invalid",
                 ai_confidence=0.99
+            )
+
+        # Check for sequential patterns (e.g., 123-45-6789)
+        if self._is_sequential_ssn(ssn_clean):
+            return ValidationResult(
+                field_name="ssn",
+                is_valid=False,
+                error_message="SSN contains invalid sequential pattern",
+                ai_confidence=0.95
+            )
+
+        # Check for repetitive patterns in groups
+        area = ssn_clean[:3]
+        group = ssn_clean[3:5]
+        serial = ssn_clean[5:9]
+
+        if area == area[0] * 3 or group == group[0] * 2 or serial == serial[0] * 4:
+            return ValidationResult(
+                field_name="ssn",
+                is_valid=False,
+                error_message="SSN contains invalid repetitive pattern",
+                ai_confidence=0.93
             )
 
         # Check for area number 000 or 666
@@ -422,8 +445,28 @@ class AIValidator:
             today = datetime.now()
             age = today.year - dob.year - ((today.month, today.day) < (dob.month, dob.day))
             return age
-        except:
+        except (ValueError, TypeError, AttributeError) as e:
+            print(f"Error calculating age: {type(e).__name__}")
             return 0
+
+    def _is_sequential_ssn(self, ssn_clean: str) -> bool:
+        """Check if SSN has sequential pattern"""
+        if len(ssn_clean) != 9:
+            return False
+
+        try:
+            digits = [int(d) for d in ssn_clean]
+            sequential_count = 0
+
+            # Check for ascending or descending sequences
+            for i in range(len(digits) - 1):
+                if digits[i+1] == digits[i] + 1 or digits[i+1] == digits[i] - 1:
+                    sequential_count += 1
+
+            # If more than 5 sequential digits, flag as suspicious
+            return sequential_count >= 5
+        except (ValueError, TypeError):
+            return False
 
     def generate_validation_report(self, application: Application) -> Dict[str, Any]:
         """Generate comprehensive validation report"""

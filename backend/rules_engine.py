@@ -82,7 +82,9 @@ class RulesEngine:
             today = datetime.now()
             age = today.year - dob.year - ((today.month, today.day) < (dob.month, dob.day))
             return age
-        except:
+        except (ValueError, TypeError, AttributeError) as e:
+            # Log the error for debugging but return safe default
+            print(f"Error calculating age from DOB '{date_of_birth}': {type(e).__name__}")
             return 0
 
     def is_ssn_suspicious(self, ssn: str) -> Tuple[bool, bool]:
@@ -161,34 +163,54 @@ class RulesEngine:
         }
 
     def _evaluate_condition(self, condition: str, context: Dict[str, Any]) -> bool:
-        """Safely evaluate a condition string"""
+        """Safely evaluate a condition string using allowlist-based parser"""
         try:
-            # Simple condition parser (in production, use a proper expression parser)
-            # This is a simplified version for demo purposes
+            # Sanitize condition string to prevent injection
+            if len(condition) > 500:
+                print(f"Condition too long: {len(condition)} chars")
+                return False
 
-            # Handle simple comparisons
-            if "<" in condition:
+            # Remove any potentially dangerous characters
+            dangerous_chars = [';', '(', ')', '[', ']', '{', '}', '\\', '`', '$']
+            if any(char in condition for char in dangerous_chars):
+                print(f"Dangerous characters in condition: {condition}")
+                return False
+
+            # Handle simple comparisons with strict parsing
+            if "<" in condition and ">" not in condition:
                 parts = condition.split("<")
                 if len(parts) == 2:
                     left = parts[0].strip()
                     right = parts[1].strip()
+
+                    # Validate left side is in context
+                    if left not in context:
+                        return False
+
                     left_val = context.get(left, 0)
                     try:
                         right_val = float(right)
                         return float(left_val) < right_val
-                    except:
+                    except (ValueError, TypeError) as e:
+                        print(f"Error parsing comparison: {type(e).__name__}")
                         return False
 
-            if ">" in condition:
+            if ">" in condition and "<" not in condition:
                 parts = condition.split(">")
                 if len(parts) == 2:
                     left = parts[0].strip()
                     right = parts[1].strip()
+
+                    # Validate left side is in context
+                    if left not in context:
+                        return False
+
                     left_val = context.get(left, 0)
                     try:
                         right_val = float(right)
                         return float(left_val) > right_val
-                    except:
+                    except (ValueError, TypeError) as e:
+                        print(f"Error parsing comparison: {type(e).__name__}")
                         return False
 
             # Handle boolean conditions
@@ -200,12 +222,34 @@ class RulesEngine:
                 conditions = condition.split(" or ")
                 return any(self._evaluate_condition(c.strip(), context) for c in conditions)
 
-            # Handle direct boolean lookup
-            var_name = condition.strip()
-            return bool(context.get(var_name, False))
+            # Handle string comparisons with allowlist
+            if "!=" in condition:
+                parts = condition.split("!=")
+                if len(parts) == 2:
+                    left = parts[0].strip()
+                    right = parts[1].strip().strip("'\"")
+                    if left in context:
+                        return str(context.get(left)) != right
+                    return False
 
+            if "==" in condition or ".startswith(" in condition:
+                # These require more complex parsing - just return False for safety
+                # In production, use a proper expression parser library
+                return False
+
+            # Handle direct boolean lookup with validation
+            var_name = condition.strip()
+            if var_name in context:
+                return bool(context.get(var_name, False))
+
+            return False
+
+        except (KeyError, ValueError, TypeError, AttributeError) as e:
+            print(f"Error evaluating condition '{condition}': {type(e).__name__}")
+            return False
         except Exception as e:
-            print(f"Error evaluating condition '{condition}': {e}")
+            # Catch any unexpected errors
+            print(f"Unexpected error evaluating condition '{condition}': {type(e).__name__}")
             return False
 
     def _calculate_risk_score(self, application: Application) -> float:
