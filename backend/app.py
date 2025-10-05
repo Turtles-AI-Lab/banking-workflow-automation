@@ -39,9 +39,19 @@ ALLOWED_ORIGINS = [
 ]
 
 # In production, load from secure environment variables
+# SECURITY: No fallback values - fail if not configured
+api_key_1 = os.getenv("API_KEY_1")
+api_key_2 = os.getenv("API_KEY_2")
+
+if not api_key_1 or not api_key_2:
+    raise ValueError("API_KEY_1 and API_KEY_2 must be set in environment variables")
+
+if api_key_1 == "dev-key-1" or api_key_2 == "dev-key-2":
+    raise ValueError("Default development keys detected - use secure production keys")
+
 API_KEYS = {
-    os.getenv("API_KEY_1", "dev-key-1"): "admin",
-    os.getenv("API_KEY_2", "dev-key-2"): "user"
+    api_key_1: "admin",
+    api_key_2: "user"
 }
 
 # Initialize FastAPI app
@@ -642,9 +652,15 @@ if __name__ == "__main__":
     print("📚 API Docs: http://localhost:8000/docs")
     print("=" * 50)
 
+    # SECURITY: Bind to localhost only - use reverse proxy for external access
+    host = os.getenv("API_HOST", "127.0.0.1")
+    if host == "0.0.0.0":
+        print("⚠️  WARNING: Binding to 0.0.0.0 exposes API to external networks!")
+        print("⚠️  Use a reverse proxy (nginx/Apache) for production deployments")
+
     uvicorn.run(
         "app:app",
-        host="0.0.0.0",
+        host=host,
         port=8000,
         reload=True,
         log_level="info"
