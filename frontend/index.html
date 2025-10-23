@@ -541,6 +541,14 @@
             }
         }
 
+        // Security: HTML escape function to prevent XSS
+        function escapeHTML(str) {
+            if (str === null || str === undefined) return '';
+            const div = document.createElement('div');
+            div.textContent = String(str);
+            return div.innerHTML;
+        }
+
         // Navigation
         function showSection(sectionName) {
             // Hide all sections
@@ -657,15 +665,23 @@
                 `;
 
                 applications.forEach(app => {
+                    // Security: Escape all user-controlled data to prevent XSS
+                    const safeAppId = escapeHTML(app.application_id);
+                    const safeFirstName = escapeHTML(app.personal_info.first_name);
+                    const safeLastName = escapeHTML(app.personal_info.last_name);
+                    const safeAccountType = escapeHTML(app.account_type.replace('_', ' '));
+                    const safeStatus = escapeHTML(app.status.replace('_', ' '));
+                    const safeRiskLevel = escapeHTML(app.risk_level);
+
                     tableHTML += `
                         <tr>
-                            <td>${app.application_id}</td>
-                            <td>${app.personal_info.first_name} ${app.personal_info.last_name}</td>
-                            <td>${app.account_type.replace('_', ' ')}</td>
-                            <td><span class="status-badge status-${app.status}">${app.status.replace('_', ' ')}</span></td>
-                            <td><span class="risk-badge risk-${app.risk_level}">${app.risk_level}</span></td>
+                            <td>${safeAppId}</td>
+                            <td>${safeFirstName} ${safeLastName}</td>
+                            <td>${safeAccountType}</td>
+                            <td><span class="status-badge status-${safeStatus.replace(' ', '_')}">${safeStatus}</span></td>
+                            <td><span class="risk-badge risk-${safeRiskLevel}">${safeRiskLevel}</span></td>
                             <td>${new Date(app.created_at).toLocaleDateString()}</td>
-                            <td><button class="nav-btn" onclick="viewApplication('${app.application_id}')">View</button></td>
+                            <td><button class="nav-btn" onclick="viewApplication('${safeAppId}')">View</button></td>
                         </tr>
                     `;
                 });
