@@ -517,6 +517,36 @@
     <script>
         const API_BASE = 'http://localhost:8000';
 
+        // SECURITY: API Key management
+        const API_KEY_STORAGE_KEY = 'banking_workflow_api_key';
+
+        function getApiKey() {
+            // Try to get from localStorage first
+            let apiKey = localStorage.getItem(API_KEY_STORAGE_KEY);
+
+            // If not found, prompt user
+            if (!apiKey) {
+                apiKey = prompt('Enter your API key (it will be stored locally):');
+                if (apiKey) {
+                    localStorage.setItem(API_KEY_STORAGE_KEY, apiKey);
+                }
+            }
+            return apiKey;
+        }
+
+        function clearApiKey() {
+            localStorage.removeItem(API_KEY_STORAGE_KEY);
+        }
+
+        // Helper to create authenticated headers
+        function getAuthHeaders() {
+            const apiKey = getApiKey();
+            return {
+                'Content-Type': 'application/json',
+                'X-API-Key': apiKey || ''
+            };
+        }
+
         // SECURITY: HTML Escaping function to prevent XSS
         function escapeHTML(str) {
             if (typeof str !== 'string') return str;
@@ -578,7 +608,9 @@
         // Load metrics
         async function loadMetrics() {
             try {
-                const response = await fetch(`${API_BASE}/dashboard/metrics`);
+                const response = await fetch(`${API_BASE}/dashboard/metrics`, {
+                    headers: getAuthHeaders()
+                });
                 const metrics = await response.json();
 
                 const metricsHTML = `
@@ -613,7 +645,9 @@
         // Load dashboard
         async function loadDashboard() {
             try {
-                const response = await fetch(`${API_BASE}/dashboard/metrics`);
+                const response = await fetch(`${API_BASE}/dashboard/metrics`, {
+                    headers: getAuthHeaders()
+                });
                 const metrics = await response.json();
 
                 let statusBreakdown = '';
@@ -640,7 +674,9 @@
         // Load applications
         async function loadApplications() {
             try {
-                const response = await fetch(`${API_BASE}/applications`);
+                const response = await fetch(`${API_BASE}/applications`, {
+                    headers: getAuthHeaders()
+                });
                 const applications = await response.json();
 
                 if (applications.length === 0) {
@@ -700,7 +736,9 @@
         // Load rules
         async function loadRules() {
             try {
-                const response = await fetch(`${API_BASE}/rules`);
+                const response = await fetch(`${API_BASE}/rules`, {
+                    headers: getAuthHeaders()
+                });
                 const rules = await response.json();
 
                 let rulesHTML = '<ul class="rules-list">';
@@ -762,7 +800,7 @@
                 // Create application
                 const createResponse = await fetch(`${API_BASE}/applications/create`, {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
+                    headers: getAuthHeaders(),
                     body: JSON.stringify(formData)
                 });
 
@@ -770,14 +808,16 @@
 
                 // Validate application
                 const validateResponse = await fetch(`${API_BASE}/applications/${application.application_id}/validate`, {
-                    method: 'POST'
+                    method: 'POST',
+                    headers: getAuthHeaders()
                 });
 
                 const validation = await validateResponse.json();
 
                 // Submit application
                 const submitResponse = await fetch(`${API_BASE}/applications/${application.application_id}/submit`, {
-                    method: 'POST'
+                    method: 'POST',
+                    headers: getAuthHeaders()
                 });
 
                 const result = await submitResponse.json();
