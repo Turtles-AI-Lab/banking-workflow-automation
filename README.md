@@ -1,5 +1,13 @@
 # Banking Workflow Automation Simulator
 
+
+![GitHub stars](https://img.shields.io/github/stars/Turtles-AI-Lab/banking-workflow-automation?style=social)
+![GitHub forks](https://img.shields.io/github/forks/Turtles-AI-Lab/banking-workflow-automation?style=social)
+![GitHub issues](https://img.shields.io/github/issues/Turtles-AI-Lab/banking-workflow-automation)
+![GitHub license](https://img.shields.io/github/license/Turtles-AI-Lab/banking-workflow-automation)
+![GitHub last commit](https://img.shields.io/github/last-commit/Turtles-AI-Lab/banking-workflow-automation)
+
+
 **AI-Powered Account Opening & Workflow Orchestration Platform**
 
 A demonstration platform showcasing intelligent workflow automation, business rules configuration, and AI-powered validation for banking account opening processes.
