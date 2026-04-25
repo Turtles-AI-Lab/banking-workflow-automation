@@ -103,12 +103,14 @@ cd banking-workflow-automation
 # Install dependencies
 pip install -r requirements.txt
 
-# Run application
-python backend/app.py
+# Run application (demo mode auto-generates ephemeral API keys and logs them)
+DEMO_MODE=true python backend/app.py
 
 # Access dashboard
 # Open http://localhost:8000
 ```
+
+For non-demo runs, copy `.env.example` to `.env` and set `API_KEY_1` and `API_KEY_2` to secure values. Do not enable `DEMO_MODE` in production.
 
 ## 🎮 Usage
 

@@ -39,14 +39,28 @@ ALLOWED_ORIGINS = [
 ]
 
 # In production, load from secure environment variables
-# SECURITY: No fallback values - fail if not configured
+DEMO_MODE = os.getenv("DEMO_MODE", "").lower() == "true"
 api_key_1 = os.getenv("API_KEY_1")
 api_key_2 = os.getenv("API_KEY_2")
 
 if not api_key_1 or not api_key_2:
-    raise ValueError("API_KEY_1 and API_KEY_2 must be set in environment variables")
-
-if api_key_1 == "dev-key-1" or api_key_2 == "dev-key-2":
+    if DEMO_MODE:
+        # Ephemeral per-process keys so a fresh clone can boot without manual setup.
+        # Never persisted; restarting the server invalidates any client using them.
+        api_key_1 = secrets.token_urlsafe(32)
+        api_key_2 = secrets.token_urlsafe(32)
+        logger.warning("=" * 70)
+        logger.warning("DEMO MODE - auto-generated API keys in use. DO NOT USE IN PRODUCTION.")
+        logger.warning("Admin key: %s", api_key_1)
+        logger.warning("User key:  %s", api_key_2)
+        logger.warning("Set API_KEY_1 and API_KEY_2 and unset DEMO_MODE for real deployments.")
+        logger.warning("=" * 70)
+    else:
+        raise ValueError(
+            "API_KEY_1 and API_KEY_2 must be set in environment variables "
+            "(or set DEMO_MODE=true for an ephemeral demo run)"
+        )
+elif api_key_1 == "dev-key-1" or api_key_2 == "dev-key-2":
     raise ValueError("Default development keys detected - use secure production keys")
 
 API_KEYS = {
